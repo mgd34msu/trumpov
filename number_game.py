@@ -1,3 +1,14 @@
+'''
+Number guessing game
+- two positive integers between 1 and 9 are chosen
+- player one gets sum, player two (or computer) gets product
+- players share information by answering yes/no to whether or not they know the chosen integers
+
+Need to finish "guessing" component, and to fix the display of information
+Also need to include some sort of hint system for when specific numbers are chosen
+- certain number pairs cannot be guessed, and end up being a 50/50 chance
+'''
+
 import numpy as np
 import random
 
@@ -13,6 +24,7 @@ class Game(object):
         self.guess_list = list()
 
     def m_filter(self, a, b):
+        # filtering inside of numpy.count_nonzero is super hacky... not guaranteed to work in future; need to rework
         if b == 0:
             return [a[y, z] for y in range(9) for z in range(9) if np.count_nonzero(a != a[y][z]) != 80]
         elif b == 1:
@@ -20,8 +32,7 @@ class Game(object):
         else:
             print('second argument must be 0 (for unique) or 1 (for non-unique)')
 '''
-    # need to finish fixing -- start from 'if np.count_nonzero.....'
-    def guess(self, g=self.guess_list):
+    def guess(self, g):
         if (len(g) + 1) % 2 != 0:
             g.append(input('Do you know the numbers? (y/n): '))
             if g[len(g) - 1] == 'y':
@@ -43,14 +54,11 @@ class Game(object):
             your_num = sum_num[0] + sum_num[1] + 2
             print('Your number was: ' + str(your_num))
         self.show_matrix()
-'''
 
     def show_matrix(self):
         print(clue_sums_matrix * filter_no_unique)
-
+'''
 
 newgame = Game()
 
 print('Your secret number is: ' + str(newgame.psclue[1]))
-newgame.show_matrix()
-newgame.guess()
