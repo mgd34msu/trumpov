@@ -19,10 +19,10 @@ class Game(object):
             return [a[y, z] for y in range(9) for z in range(9) if np.count_nonzero(a != a[y][z]) == 80]
         else:
             print('second argument must be 0 (for unique) or 1 (for non-unique)')
-
+'''
     # need to finish fixing -- start from 'if np.count_nonzero.....'
     def guess(self, g=self.guess_list):
-        if np.fmod((len(g) + 1), 2) != 0:
+        if (len(g) + 1) % 2 != 0:
             g.append(input('Do you know the numbers? (y/n): '))
             if g[len(g) - 1] == 'y':
                 final = input('Final guess: ')
@@ -43,7 +43,7 @@ class Game(object):
             your_num = sum_num[0] + sum_num[1] + 2
             print('Your number was: ' + str(your_num))
         self.show_matrix()
-
+'''
 
     def show_matrix(self):
         print(clue_sums_matrix * filter_no_unique)
