@@ -31,7 +31,7 @@ Iteration continues until the range specified as the argument to the function is
 One liner w/ default settings: (divisible by 3 & 5, range of 1 to 100:
 ['FizzBuzz'[i**2%3*4:8--i**4%5] or i for i in range(1, 101)]
 
-possible to make it once character shorter by using i*i instead of i**2:
+possible to make it one character shorter by using i*i instead of i**2:
 ['FizzBuzz'[i*i%3*4:8--i**4%5] or i for i in range(1, 101)]
 -----------------------------------------------------------------------------------------------------------------------
 '''
