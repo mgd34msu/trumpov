@@ -31,32 +31,40 @@ def generate_matrix(who):
     return matrix
 
 
-def clear_unique(matrix):
+def m_filter(matrix):
     for i in range(9):
         for j in range(9):
             counter = 0
-            c_list = []
             for k in range(9):
                 for l in range(9):
                     if matrix[i][j] == matrix[k][l]:
                         counter += 1
-            c_list.append(counter)
-            if counter == 1:
+            if counter == 1 or i > j:
                 matrix[i][j] = 0
+    for m in range(9):
+        for n in range(9):
+            if matrix[m][n] != 0:
+                matrix[m][n] = 1
     return matrix
 
 
 game_numbers = generate_numbers()
-
 player_secret = game_numbers[0] * game_numbers[1]
 player_matrix = generate_matrix(1)
-player_thinks = clear_unique(player_matrix)
-
+filter_matrix = generate_matrix(1)
 computer_secret = sum(game_numbers)
 computer_matrix = generate_matrix(2)
-computer_thinks = clear_unique(computer_matrix)
-
+game_filter = m_filter(filter_matrix)
+player_thinks = player_matrix * game_filter
+computer_thinks = computer_matrix * game_filter
 guess_list = []
+
+
+def new_filter(m1=player_matrix, m2=computer_matrix, f=filter_matrix, g=guess_list):
+    if len(g) % 2 != 0:
+        return m_filter(generate_matrix(2) * f) * m1
+    else:
+        return m_filter(generate_matrix(1) * f) * m2
 
 
 def initial_guess():
@@ -78,8 +86,9 @@ def best_guesses(a):
     return [sum(possibilities(a)[i]) for i in range(len(possibilities(a)))]
 
 
-def guess(g):
+def guess(g, helper=player_secret):
     if (len(g) + 1) % 2 != 0:
+        print(best_guesses(helper))
         g.append(input('Do you know the numbers? (y/n): '))
         if g[len(g) - 1] == 'y':
             final = input('Final guess: ')
@@ -87,12 +96,14 @@ def guess(g):
                 print('You win!')
             else:
                 print('Nope, you lose! \nBetter luck next time! \nIt was actually ' + str(computer_secret))
-        else:
-            print('WE NEED TO FILTER HERE ... ')
+                return
+        #else:
+            #filter_matrix = m_filter(generate_matrix(2) * filter_matrix)
+            #guess(g)
     else:
         g.append('n')
         print('WE NEED TO FILTER HERE TOO ... ')
-        guess(guess_list)
+        guess(g)
 
 
 initial_guess()
