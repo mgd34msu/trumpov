@@ -13,52 +13,86 @@ import numpy as np
 import random
 
 
-class Game(object):
-    def __init__(self):
-        self.number = [random.randint(1, 9), random.randint(1, 9)]
-        self.psmtrx = [np.arange(1, 10) * np.arange(1, 10).reshape(9, 1),
-                       np.arange(1, 10) + np.arange(1, 10).reshape(9, 1)]
-        self.psclue = [self.number[0] * self.number[1], sum(self.number)]
-        self.pshint = [[(i, j) for (i, j) in np.ndenumerate(self.psmtrx[0]) if i[0] <= i[1]],
-                       [(x, y) for (x, y) in np.ndenumerate(self.psmtrx[1]) if x[0] <= x[1]]]
-        self.guess_list = list()
+def generate_numbers():
+    return [random.randint(1, 9), random.randint(1, 9)]
 
-    def m_filter(self, a, b):
-        # filtering inside of numpy.count_nonzero is super hacky... not guaranteed to work in future; need to rework
-        if b == 0:
-            return [a[y, z] for y in range(9) for z in range(9) if np.count_nonzero(a != a[y][z]) != 80]
-        elif b == 1:
-            return [a[y, z] for y in range(9) for z in range(9) if np.count_nonzero(a != a[y][z]) == 80]
-        else:
-            print('second argument must be 0 (for unique) or 1 (for non-unique)')
-'''
-    def guess(self, g):
-        if (len(g) + 1) % 2 != 0:
-            g.append(input('Do you know the numbers? (y/n): '))
-            if g[len(g) - 1] == 'y':
-                final = input('Final guess: ')
-                if int(final) == self.psclue[0]:
-                    print('You win!')
-                else:
-                    print('Nope, you lose! \nBetter luck next time! \nIt was actually ' + str(self.psclue[0]))
+
+def generate_matrix(who):
+    if who == 1:
+        matrix = np.arange(1, 10) * np.arange(1, 10).reshape(9, 1)
+    elif who == 2:
+        matrix = np.arange(1, 10) + np.arange(1, 10).reshape(9, 1)
+    else:
+        return np.zeros((9, 9), dtype=np.int)
+    for i in range(9):
+        for j in range(9):
+            if i > j:
+                matrix[i][j] = 0
+    return matrix
+
+
+def clear_unique(matrix):
+    for i in range(9):
+        for j in range(9):
+            counter = 0
+            c_list = []
+            for k in range(9):
+                for l in range(9):
+                    if matrix[i][j] == matrix[k][l]:
+                        counter += 1
+            c_list.append(counter)
+            if counter == 1:
+                matrix[i][j] = 0
+    return matrix
+
+
+game_numbers = generate_numbers()
+
+player_secret = game_numbers[0] * game_numbers[1]
+player_matrix = generate_matrix(1)
+player_thinks = clear_unique(player_matrix)
+
+computer_secret = sum(game_numbers)
+computer_matrix = generate_matrix(2)
+computer_thinks = clear_unique(computer_matrix)
+
+guess_list = []
+
+
+def initial_guess():
+    print('Your secret number is: ' + str(player_secret))
+    if player_secret in player_thinks:
+        print(str(player_secret) + ' is not a unique product of any numbers between 1 and 9.')
+        print('Continue guessing until you think you know the computer\'s secret number!')
+        guess(guess_list)
+    else:
+        print(str(player_secret) + ' is the product of ' + str(game_numbers[0]) + ' and ' + str(game_numbers[1]) + '.')
+        print('You know the computer\'s secret number is: ' + str(sum(game_numbers)) + '.')
+
+
+def possibilities(a):
+    return [[i, int(a / i)] for i in range(1, 10) if a % i == 0 and a / i < 9 and i >= a / i]
+
+
+def best_guesses(a):
+    return [sum(possibilities(a)[i]) for i in range(len(possibilities(a)))]
+
+
+def guess(g):
+    if (len(g) + 1) % 2 != 0:
+        g.append(input('Do you know the numbers? (y/n): '))
+        if g[len(g) - 1] == 'y':
+            final = input('Final guess: ')
+            if int(final) == computer_secret:
+                print('You win!')
             else:
-                self.m_filter(self.psmtrx[0], 0)
+                print('Nope, you lose! \nBetter luck next time! \nIt was actually ' + str(computer_secret))
         else:
-            g.append('n')
-            self.m_filter(self.psmtrx[1], 0)
-            guess()
-        # this if statement no longer works -- update to check hint list instead of clue matrix
-        if np.count_nonzero(clue_prod_matrix * filter_no_unique) == 1:
-            print('Computer has won.')
-            sum_num = np.argwhere(clue_prod_matrix * filter_no_unique != 0)[0]
-            your_num = sum_num[0] + sum_num[1] + 2
-            print('Your number was: ' + str(your_num))
-        self.show_matrix()
+            print('WE NEED TO FILTER HERE ... ')
+    else:
+        g.append('n')
+        print('WE NEED TO FILTER HERE TOO ... ')
+        guess(guess_list)
 
-    def show_matrix(self):
-        print(clue_sums_matrix * filter_no_unique)
-'''
 
-newgame = Game()
-
-print('Your secret number is: ' + str(newgame.psclue[1]))
+initial_guess()
