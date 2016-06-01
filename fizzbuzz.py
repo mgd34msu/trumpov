@@ -7,7 +7,7 @@ def fizzbuzz(r):
 
 '''
 FizzBuzz is an 8 character string (w/ indices 0 through 7)
-The function above runs the classic 'FizzBuzz' test up to a given value, given by the argument.
+The function above runs the classic 'FizzBuzz' test up to a given value, set by the argument.
 The result is a list where each element is either a slice of the FizzBuzz string or the current value of an iterator
 The function slices the FizzBuzz string in the following way:
     Any modulo operation on a number, x, where (x**(n-1))%n, and where n is prime, will return a 1 or 0 (x*n%n = 0).
@@ -30,6 +30,9 @@ Iteration continues until the range specified as the argument to the function is
 
 One liner w/ default settings: (divisible by 3 & 5, range of 1 to 100:
 ['FizzBuzz'[i**2%3*4:8--i**4%5] or i for i in range(1, 101)]
+
+possible to make it once character shorter by using i*i instead of i**2:
+['FizzBuzz'[i*i%3*4:8--i**4%5] or i for i in range(1, 101)]
 -----------------------------------------------------------------------------------------------------------------------
 '''
 
