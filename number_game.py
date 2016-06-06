@@ -42,6 +42,13 @@ class Game(object):
                     f[y - 1, z - 1] = 1
         return f
 
+    @staticmethod
+    def possibilities(a):
+        return [[i, int(a / i)] for i in range(1, 10) if a % i == 0 and a / i < 9 and i >= a / i]
+
+    def best_guesses(self, a):
+        return [sum(self.possibilities(a)[i]) for i in range(len(self.possibilities(a)))]
+
 
 class Player(object):
     def __init__(self, name):
@@ -50,8 +57,10 @@ class Player(object):
         self.wins = 0
         self.loss = 0
         self.w_l_ratio = self.wl(self.wins, self.loss)
+        self.current_bet = 0
 
-    def wl(self, w, l):
+    @staticmethod
+    def wl(w, l):
         try:
             wlr = w / l
         except ZeroDivisionError:
@@ -59,37 +68,41 @@ class Player(object):
         return wlr
 
 
-
-def possibilities(a):
-    return [[i, int(a / i)] for i in range(1, 10) if a % i == 0 and a / i < 9 and i >= a / i]
-
-
-def best_guesses(a):
-    return [sum(possibilities(a)[i]) for i in range(len(possibilities(a)))]
+player = Player(input('Player Name: '))
+game = Game()
 
 
-def initial_guess():
-    print('Your secret number is: ' + str(player_secret))
-    if player_secret in player_thinks:
-        print(str(player_secret) + ' is not a unique product of any numbers between 1 and 9.')
-        print('Continue guessing until you think you know the computer\'s secret number!')
-        guess(guess_list)
+def bet():
+    if player.money > 0:
+        print('Max bet: ' + str(player.money) + '.')
+        amount = input('Bet amount: ')
+        if int(amount) > int(player.money):
+            print('Unable to bet the specified amount.  Please try again.')
+            amount = 0
+            bet()
     else:
-        print(str(player_secret) + ' is the product of ' + str(game_numbers[0]) + ' and ' + str(game_numbers[1]) + '.')
-        print('You know the computer\'s secret number is: ' + str(sum(game_numbers)) + '.')
+        print('Game Over')
+        return 0, 0
+    player.current_bet = int(amount)
+    player.money -= int(amount)
+    return player.current_bet, player.money
 
 
-def guess(g, helper=player_secret):
+def guess(g, helper=game.secret[0]):
     if (len(g) + 1) % 2 != 0:
-        print(best_guesses(helper))
+        print(game.best_guesses(helper))
         g.append(input('Do you know the numbers? (y/n): '))
         if g[len(g) - 1] == 'y':
             final = input('Final guess: ')
-            if int(final) == computer_secret:
+            if int(final) == game.secret[1]:
                 print('You win!')
+                player.money += player.current_bet * 2
+                player.current_bet = 0
+                return player.money, player.current_bet
             else:
-                print('Nope, you lose! \nBetter luck next time! \nIt was actually ' + str(computer_secret))
-                return
+                print('Nope, you lose! \nBetter luck next time! \nIt was actually ' + str(game.secret[1]))
+                player.current_bet = 0
+                return player.current_bet
                 # else:
                 # filter_matrix = m_filter(generate_matrix(2) * filter_matrix)
                 # guess(g)
@@ -98,5 +111,16 @@ def guess(g, helper=player_secret):
         print('WE NEED TO FILTER HERE TOO ... ')
         guess(g)
 
+
+def initial_guess():
+    player.current_bet, player.money = bet()
+    print('Your secret number is: ' + str(game.secret[0]))
+    if game.secret[0] in game.player_thinks:
+        print(str(game.secret[0]) + ' is not a unique product of any numbers between 1 and 9.')
+        print('Continue guessing until you think you know the computer\'s secret number!')
+        guess(game.guess_list)
+    else:
+        print(str(game.secret[0]) + ' is the product of ' + str(game.g_nums[0]) + ' x ' + str(game.g_nums[1]) + '.')
+        print('You know the computer\'s secret number is: ' + str(sum(game.g_nums)) + '.')
 
 initial_guess()
