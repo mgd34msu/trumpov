@@ -1,4 +1,6 @@
-# fun w/ fizzbuzz -- shortest one liner, as functions, and shortest one liner function to take any divisors
+# fun w/ fizzbuzz -- short one-liners as functions -- see comments for non-function one-liner.
+
+# 1.) as short as possible; works w/ default fizzbuzz %3 %5 settings
 
 
 def fizzbuzz(r):
@@ -28,13 +30,15 @@ The function slices the FizzBuzz string in the following way:
 In the event of an empty string ('FizzBuzz'[4:4]), the function above will return the current value of the iterator.
 Iteration continues until the range specified as the argument to the function is met.
 
-One liner w/ default settings: (divisible by 3 & 5, range of 1 to 100:
+One liner w/ default settings: (divisible by 3 & 5, range of 1 to 100 [60 chars]:
 ['FizzBuzz'[i**2%3*4:8--i**4%5] or i for i in range(1, 101)]
 
-Possible to make it one character shorter by using i*i instead of i**2:
+Possible to make it one character shorter by using i*i instead of i**2 [59 chars]:
 ['FizzBuzz'[i*i%3*4:8--i**4%5] or i for i in range(1, 101)]
 -----------------------------------------------------------------------------------------------------------------------
 '''
+
+# 2.) a bit longer, but works with all positive integers
 
 
 def fb_any(a, b, r):
@@ -43,9 +47,9 @@ def fb_any(a, b, r):
 '''
 Nearly the same as the previous FizzBuzz, except that any positive integers may be used.
 Uses ternary operators to evaluate mods of 'a' and 'b'.
-The reduction in fun was amplified further, as I also spaced everything out PEP8 style...
+Also, spaced everything out PEP8 style...
 
-One liner w/ default settings: (divisible by 3 & 5, range of 1 to 100:
+One liner w/ default settings: (divisible by 3 & 5, range of 1 to 100) [89 chars]:
 ['FizzBuzz'[(1 if i % 3 else 0)*4:8-((1 if i % 5 else 0)*4)] or i for i in range(1, 101)]
 -----------------------------------------------------------------------------------------------------------------------
 '''
