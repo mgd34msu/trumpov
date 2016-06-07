@@ -1,3 +1,7 @@
+# Easy to win number game ... win is automatic most of the time, since step 1 is to eliminate unique products
+# if player doesn't win automatically on the first round, it's pretty much a 50/50
+# will likely integrate this into some other game as a mini-game, as it isn't all that fun on its own.
+# Still need to implement filtering after initial guess
 import numpy as np
 import random
 
@@ -54,9 +58,9 @@ class Player(object):
     def __init__(self, name):
         self.name = name
         self.money = 10
-        self.wins = 0
+        self.win = 0
         self.loss = 0
-        self.w_l_ratio = self.wl(self.wins, self.loss)
+        self.w_l_ratio = self.wl(self.win, self.loss)
         self.current_bet = 0
 
     @staticmethod
@@ -69,6 +73,7 @@ class Player(object):
 
 
 player = Player(input('Player Name: '))
+
 game = Game()
 
 
@@ -98,17 +103,16 @@ def guess(g, helper=game.secret[0]):
                 print('You win!')
                 player.money += player.current_bet * 2
                 player.current_bet = 0
-                return player.money, player.current_bet
+                player.win += 1
+                return player.money, player.current_bet, player.win
             else:
                 print('Nope, you lose! \nBetter luck next time! \nIt was actually ' + str(game.secret[1]))
                 player.current_bet = 0
-                return player.current_bet
-                # else:
-                # filter_matrix = m_filter(generate_matrix(2) * filter_matrix)
-                # guess(g)
+                player.loss += 1
+                return player.current_bet, player.loss
     else:
         g.append('n')
-        print('WE NEED TO FILTER HERE TOO ... ')
+        # NEED TO ADD - filter one additional step
         guess(g)
 
 
