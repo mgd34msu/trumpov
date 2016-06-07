@@ -20,7 +20,7 @@ The function slices the FizzBuzz string in the following way:
     Subtracting from 8 allows for 8 to be the upper limit on the right side of the string slice.
     Additionally, when given a negative mod operation, python returns the "inverse" of usual expected result.
     In this case, -x**(5-1)%5 returns 4 or 0 instead of 1 or 0.
-     -- note:  Could do the same thing as on the left side, multiplying by 4 etc., but it is more fun this way.
+     -- note:  Could do the same thing as on the left side, multiplying by 4 etc., but it is shorter this way.
     Subtracting the result of the negative mod from 8 will yield either 8 or 4 for the right side of the string slice.
     The remaining potential outcomes are now:
         'FizzBuzz'[0:4] --> 'Fizz'
