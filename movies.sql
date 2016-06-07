@@ -1,4 +1,6 @@
 /* Source: http://www.boxofficemojo.com/alltime/world/ */
+/* showing creation and population of table, then queries */
+/* Adding everything as text in order to show data-cleanup inside of query */
 
 CREATE TABLE top_movies(
   rank TEXT NOT NULL PRIMARY KEY,
@@ -113,7 +115,7 @@ INSERT INTO top_movies(rank,title,studio,worldwide,domestic_money,domestic_perce
 INSERT INTO top_movies(rank,title,studio,worldwide,domestic_money,domestic_percent,overseas_money,overseas_percent,year) VALUES ('99','Casino Royale','Sony','$599.0','$167.4','28.0%','$431.6','72.0%','2006');
 INSERT INTO top_movies(rank,title,studio,worldwide,domestic_money,domestic_percent,overseas_money,overseas_percent,year) VALUES ('100','Tangled','BV','$591.8','$200.8','33.9%','$391.0','66.1%','2010');
 
-/* Run various queries ... not really interested in the output, but interested in query construction */
+/* Run various queries ... not really interested in the output, but interested in showing complex query construction */
 SELECT studio, 
     ROUND(AVG(CAST(SUBSTR(domestic_money, 2) AS REAL)), 2) AS studio_d_avg, 
     ROUND(MIN(CAST(SUBSTR(domestic_money, 2) AS REAL)), 2) AS studio_d_min,
