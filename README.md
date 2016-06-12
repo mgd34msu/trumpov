@@ -20,5 +20,9 @@ Just a simple regression using stock data via Quandl.|
 |5.) 3d6to2d6.py|
 |Maps three indistinguishable 6-sided die to two distinguishable 6-sided die|
 |will probably improve this to do NdN-to-2d6 at some point|
+| |
+|6.) income_search.py|
+|very simple search of Lending Club data; uses verified income; update coming soon|
+
 
 More to come ...
