@@ -21,6 +21,7 @@ def job_search(job_title, dataframe=df):
     return dataframe[[job_title in str(dataframe['emp_title'].iloc[i]).lower() for i in range(len(dataframe))]]
 
 
+# this needs to be changed
 df = job_search('financial', job_search('analyst'))
 df = verified_income(df)
 df = income_bounds(20000, 200000)
