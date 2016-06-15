@@ -96,8 +96,8 @@ df.loc[df['other_mort_debt'] < 0, 'other_mort_debt'] = 0
 df['addl_annual_rev_ds'] = (12 * (df['other_rev_debt'] / 60)) + (df['int_rate'] * df['other_rev_debt'])
 df['addl_annual_rev_ds'] = df['addl_annual_rev_ds'].round(2)
 
-# estimated annual debt service requirement on non-Lending-Club term debt (at 6%, 20yr amort)
-df['addl_annual_mort_ds'] = (12 * (df['other_mort_debt'] / 60)) + (.06 * df['other_mort_debt'])
+# estimated annual debt service requirement on non-Lending-Club term debt (at 1/2 Lending Club int_rate, 20yr amort)
+df['addl_annual_mort_ds'] = (12 * (df['other_mort_debt'] / 240)) + ((df['int_rate'] / 2) * df['other_mort_debt'])
 df['addl_annual_mort_ds'] = df['addl_annual_mort_ds'].round(2)
 
 # total adjusted annual debt service on revolving debt
@@ -123,4 +123,4 @@ logistic_model.fit(df[vars], df['bad_loan'])
 labels = logistic_model.predict(df[vars])
 df['predicted_labels'] = labels
 pred_probs = logistic_model.predict_proba(df[vars])
-plt.scatter(df['total_acc'], pred_probs[:,1])
+plt.scatter(df['total_acc'], pred_probs[:, 1])
