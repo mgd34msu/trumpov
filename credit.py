@@ -1,7 +1,8 @@
 # Lending Club dataset for 2015 (https://resources.lendingclub.com/LoanStats3d.csv.zip)
 import numpy as np
 import pandas as pd
-# from matplotlib import pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from matplotlib import pyplot as plt
 
 # read the dataset
 print('Reading CSV file and cleaning the dataset. \nThis will take ~40 seconds.\n')
@@ -112,3 +113,14 @@ df['dscr_all'] = df['annual_inc'] / df['tot_adj_annual_ds']
 df['dscr_lc'] = df['dscr_lc'].round(2)
 df['dscr_rev'] = df['dscr_rev'].round(2)
 df['dscr_all'] = df['dscr_all'].round(2)
+
+# try to find something that closely approximates a FICO score -- will likely need to use random forests
+# this regression is just a placeholder, so that I know where I left off at 3AM ...
+logistic_model = LogisticRegression()
+vars = ['term', 'delinq_2yrs', 'open_acc', 'pub_rec', 'chargeoff_within_12_mths', 'total_acc', 'tot_cur_bal',
+        'num_accts_ever_120_pd', 'verify_no', 'tax_liens', 'home_own']
+logistic_model.fit(df[vars], df['bad_loan'])
+labels = logistic_model.predict(df[vars])
+df['predicted_labels'] = labels
+pred_probs = logistic_model.predict_proba(df[vars])
+plt.scatter(df['total_acc'], pred_probs[:,1])
