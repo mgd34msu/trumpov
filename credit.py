@@ -14,7 +14,9 @@ df = pd.read_csv('lc/LoanStats3d.csv', skiprows=0, header=1, skipfooter=2)
 drop_list = ['id', 'member_id', 'url', 'desc', 'grade', 'pymnt_plan', 'zip_code', 'title', 'emp_title', 'policy_code',
              'initial_list_status', 'funded_amnt_inv', 'out_prncp_inv', 'total_pymnt_inv', 'recoveries', 'dti_joint',
              'collection_recovery_fee', 'funded_amnt', 'annual_inc_joint', 'application_type', 'mths_since_last_record',
-             'verification_status_joint']
+             'verification_status_joint', 'last_pymnt_amnt', 'last_credit_pull_d', 'last_pymnt_d', 'next_pymnt_d',
+             'mths_since_last_delinq', 'total_rec_late_fee', 'mths_since_last_major_derog',
+             'collections_12_mths_ex_med']
 
 for item in drop_list:
     df.drop(item, axis=1, inplace=True)
@@ -64,6 +66,13 @@ rename_dict = {'own': 'home_own',
 df = df.rename(columns=rename_dict)
 df = df.rename(columns=purpose_dict)
 
+# identify good loans and bad loans (might include the 31 to 120 day late category later)
+df.loc[df['ls_default'] == 1, 'bad_loan'] = 1
+df.loc[df['ls_chargeoff'] == 1, 'bad_loan'] = 1
+df.loc[df['bad_loan'] != 1, 'bad_loan'] = 0
+df.loc[df['bad_loan'] != 1, 'good_loan'] = 1
+df.loc[df['good_loan'] != 1, 'good_loan'] = 0
+
 # add columns related to debt service and debt service coverage
 
 # calculate annual debt service payments for Lending Club loans
@@ -81,7 +90,6 @@ df.loc[df['other_rev_debt'] < 0, 'other_rev_debt'] = 0
 # total mortgage/installment debt (also not Lending Club)
 df['other_mort_debt'] = df['tot_cur_bal'] - df['other_rev_debt']
 df.loc[df['other_mort_debt'] < 0, 'other_mort_debt'] = 0
-
 
 # estimated annual debt service requirement on non-Lending-Club revolving debt (at Lending Club int_rate, 5yr amort)
 df['addl_annual_rev_ds'] = (12 * (df['other_rev_debt'] / 60)) + (df['int_rate'] * df['other_rev_debt'])
