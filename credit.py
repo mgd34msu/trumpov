@@ -124,3 +124,6 @@ labels = logistic_model.predict(df[vars])
 df['predicted_labels'] = labels
 pred_probs = logistic_model.predict_proba(df[vars])
 plt.scatter(df['total_acc'], pred_probs[:, 1])
+
+# might come back to redo the columns that I drop -- first number in zip code denotes a region in the US, so some
+# data related to various regions could be gleaned from including it as a variable, etc.
