@@ -23,6 +23,7 @@ Just a simple regression using stock data via Quandl.|
 | |
 |6.) income_search.py|
 |very simple search of Lending Club data; uses verified income; update coming soon|
+|currently working on this as my primary project|
 
 
 More to come ...
