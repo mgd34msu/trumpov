@@ -72,3 +72,5 @@ d = get_pet('dog', 'Rover')
 print('\n')
 print('The {}\'s name is "{}".'.format(d.__str__(), d.name))
 print('{} says "{}!"'.format(d.name, d.speak()))
+
+# might as well go through the other usual design patterns -- will upload those later next week
