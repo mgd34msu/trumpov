@@ -26,3 +26,5 @@ lc/LCDataDictionary.xlsx
 .idea/inspectionProfiles/Project_Default.xml
 
 temp.html
+
+*.pickle
