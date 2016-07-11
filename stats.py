@@ -40,17 +40,22 @@ for i in range(int(size)):
     s = Student(names[random.randint(0, len(names) - 1)], random.randint(1, 100))
     students.loc[i] = int(s.id), str(s.name), int(s.grade)
 
+# population mean and standard deviation -- of 'grade' column
+pop_mean = students['grade'].mean()
+pop_stdev = students['grade'].std()
+
+sample_df = students.sample(100)
+
 # x-bar and standard deviation -- better to have as global than to constantly recalculate inside of a method
-x_bar = students['grade'].mean()
-stdev = students['grade'].std()
+x_bar = sample_df['grade'].mean()
+stdev = sample_df['grade'].std()
 
-
-def get_zscore(df=students):
+def get_zscore(df):
     '''calculate the z-score'''
     return [(x - x_bar) / stdev for x in df['grade']]
 
 # add z-score column to students dataframe
-students.insert(3, 'z_score', get_zscore())
+sample_df.insert(3, 'z_score', get_zscore(sample_df))
 
 
 # Mike and Emily info:
