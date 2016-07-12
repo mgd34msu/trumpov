@@ -44,28 +44,22 @@ for i in range(int(size)):
 pop_mean = students['grade'].mean()
 pop_stdev = students['grade'].std()
 
-sample_df = students.sample(100)
 
-# x-bar and standard deviation -- better to have as global than to constantly recalculate inside of a method
-x_bar = sample_df['grade'].mean()
-stdev = sample_df['grade'].std()
+def get_sample(df, size):
+    '''grab a sample, also get mean and standard dev'''
+    sample_df = df.sample(size)
+    x_bar = sample_df['grade'].mean()
+    stdev = sample_df['grade'].std()
+    return sample_df, x_bar, stdev
+
 
 def get_zscore(df):
     '''calculate the z-score'''
     return [(x - x_bar) / stdev for x in df['grade']]
 
-# add z-score column to students dataframe
+sample_df, x_bar, stdev = get_sample(students, 100)
+
 sample_df.insert(3, 'z_score', get_zscore(sample_df))
 
-
-# Mike and Emily info:
-df_mike = students['grade'][students['name'] == 'Mike']
-df_emily = students['grade'][students['name'] == 'Emily']
-
-print('"Mike" mean: ', df_mike.mean())
-print('"Mike" mean: ', df_mike.std())
-plt.hist(students['grade'][students['name'] == 'Mike'])
-
-print('"Emily" mean: ', df_emily.mean())
-print('"Emily" mean: ', df_emily.std())
-plt.hist(students['grade'][students['name'] == 'Emily'])
+# sample_df histogram
+plt.hist(sample_df['z_score'])
