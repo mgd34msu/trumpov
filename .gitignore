@@ -28,3 +28,7 @@ lc/LCDataDictionary.xlsx
 temp.html
 
 *.pickle
+
+fm_project/data/*.txt
+
+factbook.db
