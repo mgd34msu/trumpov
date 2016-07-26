@@ -85,3 +85,39 @@ def bond_price(par, coup_rate, req_rate, n, m=2):
     return pv_annu(c, req_rate, n, m) + pv(par, req_rate, n, m)
 
 
+# 2(b) Conventional Yield Measures for Bonds
+
+
+def yield_current(par, coup_rate, p):
+    """ relates the annual coupon interest (ci = par * coup_rate) to the market price (p) """
+    return (par * coup_rate) / p
+
+
+def yield_maturity(price, par, cr, rr, n, m=2, accuracy=50):
+    """ finds YTM by trial and error, within the bounds of price plus/minus an accuracy factor, default at 50 """
+    bp_est = bond_price(par, cr, rr, n, m)
+    if price - accuracy <= bp_est <= price + accuracy:
+        return round(rr, 3)
+    elif bp_est < price - accuracy:
+        return yield_maturity(price, par, cr, rr - .005, n, m, accuracy)
+    else:
+        return yield_maturity(price, par, cr, rr + .005, n, m, accuracy)
+
+
+def port_yield_wa(*args):
+    """ portfolio yield weighted average """
+    """ arguments in format of [coupon rate, maturity, par value, market value, YTM] """
+    mkt_val = 0
+    pywa = 0
+    for bond in args:
+        mkt_val += bond[3]
+    for bond in args:
+        bond.append(bond[3] / mkt_val)
+        bond.append(bond[5] * bond[4])
+    for bond in args:
+        pywa += bond[6]
+    return round(pywa, 4)
+
+
+# 2(c) Potential Sources of Dollar Return
+
