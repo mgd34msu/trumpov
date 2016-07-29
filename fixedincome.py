@@ -125,19 +125,27 @@ def yield_maturity(price, par, cr, rr, n, m=2, accuracy=50):
         return yield_maturity(price, par, cr, rr + .005, n, m, accuracy)
 
 
-def port_yield_wa(*args):
+def port_wt_avg(*args, duration=0):
     """ portfolio yield weighted average """
     """ arguments in format of [coupon rate, maturity, par value, market value, YTM] """
+    """ set duration=1 to return portfolio duration wt avg instead of portfolio value wt avg """
     mkt_val = 0
+    p_dur = 0
     pywa = 0
     for bond in args:
         mkt_val += bond[3]
     for bond in args:
         bond.append(bond[3] / mkt_val)
         bond.append(bond[5] * bond[4])
+        bond.append(duration_mod(bond[2], bond[0], bond[4], bond[1]))
+        bond.append(bond[4] * bond[7])
     for bond in args:
         pywa += bond[6]
-    return round(pywa, 4)
+        p_dur += bond[8]
+    if duration > 0:
+        return round(p_dur, 4)
+    else:
+        return round(pywa, 4)
 
 
 # 2(c) Potential Sources of Dollar Return
@@ -239,3 +247,28 @@ def duration_mod(par, coup_rate, req_rate, n, m=2):
 
 
 # 3(d) Price Volatility Measures:  Convexity
+
+
+def convexity(par, coup_rate, req_rate, n, m=2):
+    """ Convexity, expressed in years """
+    c = coupon(par / (par / 100), coup_rate, m)
+    pv_par = pv(par, req_rate, n, m, 5) / (par / 100)
+    temp_pvcf, temp_t_t = 0, 0
+    for i in range(1, (n * m) + 1):
+        new_pvcf = c * pv(1, req_rate, i / m, m, 5)
+        new_t_t = new_pvcf * (i * (i + 1))
+        temp_pvcf += new_pvcf
+        temp_t_t += new_t_t
+    max_t = (n * m) * ((n * m) + 1)
+    total_pvcf = round(temp_pvcf + pv_par, 5)
+    total_t_t = round(temp_t_t + (pv_par * max_t), 5)
+    cvx_years = (total_t_t / (((1 + (req_rate / m)) ** m) * total_pvcf)) / (2 ** m)
+    return round(cvx_years, 2)
+
+
+# 4. The Yield Curve and Its Applications to Pricing and Duration
+
+# 4(a) The Yield Curve, Spot Rate Curve, and Forward Rates
+
+
+
