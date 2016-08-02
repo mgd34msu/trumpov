@@ -144,6 +144,7 @@ class Bond:
         self.limited_return = self.calc_limited_return()
         self.duration_mac = self.calc_dur_mac()
         self.duration_mod = round((self.duration_mac / (1 + self.r_m)), 2)
+        self.dollar_duration = round(self.calc_doll_dur(), self.m_precision)
         self.convexity = self.calc_convexity()
         self.p_chg_dur = round(self.calc_chg_p_dur(), self.p_precision)
         self.p_chg_cvx = round(self.calc_chg_p_cvx(), self.p_precision)
@@ -233,6 +234,9 @@ class Bond:
         pvbp = (self.price / par_100) - (new_price / par_100)
         pvpc = round(round(pvbp, self.m_precision) / self.price, self.p_precision)
         return pct_chg, round(pvbp, 7), pvpc
+
+    def calc_doll_dur(self):
+        return self.duration_mod * (self.price / (self.par / 100))
 
     def calc_hedge_ratio(self, hedge_vehicle, yield_beta=1):
         """ hedge ratio in terms of price value of bps per $100 par value of a bond and a hedging vehicle """
