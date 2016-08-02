@@ -43,7 +43,8 @@ class TVM:
         self.pmt_grad = self.find_grad()
 
         if self.series != 0:
-            """ let calculations happen as if cf and/or r were not lists, then calculate series """
+            """ lets calculations happen as if cf and/or r were not lists, to avoid errors """
+            """ after calculations, if there are cf and/or r lists, recalculate as series """
             self.cf = cf
             self.r = r
             self.fv_s = self.calc_series()[0]
