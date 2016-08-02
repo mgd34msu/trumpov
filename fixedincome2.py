@@ -1,3 +1,6 @@
+import scipy.optimize as opt
+
+
 class TVM:
     def __init__(self, cf, r, n, m=1, g=0, m_precision=2, p_precision=4, series=0):
         self.series = series
@@ -40,14 +43,19 @@ class TVM:
         self.pmt_grad = self.find_grad()
 
         if self.series != 0:
+            """ let calculations happen as if cf and/or r were not lists, then calculate series """
             self.cf = cf
             self.r = r
             self.fv_s = self.calc_series()[0]
             self.pv_s = self.calc_series()[1]
 
     def __repr__(self):
-        return "TVM(cf=%s, r=%s, n=%s, m=%s, g=%s, m_precision=%s, p_precision=%s, series=%s)" %   \
-              (self.cf, self.r, self.n, self.m, self.g, self.m_precision, self.p_precision, self.series)
+        return "cf=%s [cash flow], r=%s [rate], n=%s [years], m=%s[compounds], g=%s [growth] \n" \
+               "m_precision=%s [decimal precision of values returned as money] \n" \
+               "p_precision=%s [decimal precision of values returned as percentages] \n" \
+               "series=%s [0 = no cf or r lists; 1 = cf list; 2 = cf and r lists] \n" \
+               "----------------------------------------------------------------------------\n" % \
+               (self.cf, self.r, self.n, self.m, self.g, self.m_precision, self.p_precision, self.series)
 
     def calc(self):
         return (1 + self.r_m) ** self.n_m
@@ -136,12 +144,19 @@ class Bond:
         self.limited_return = self.calc_limited_return()
         self.duration_mac = self.calc_dur_mac()
         self.duration_mod = round((self.duration_mac / (1 + self.r_m)), 2)
+        self.convexity = self.calc_convexity()
+        self.p_chg_dur = round(self.calc_chg_p_dur(), self.p_precision)
+        self.p_chg_cvx = round(self.calc_chg_p_cvx(), self.p_precision)
+        self.p_chg_appx = self.p_chg_dur + self.p_chg_cvx
+        self.ytm = self.calc_ytm()
 
     def __repr__(self):
-        return " par=%s [par value],\n coup_rate=%s [coupon rate],\n req_rate=%s [required return],\n n=%s [years],\n" \
-               " m=%s [compounds per period],\n m_precision=%s [decimal precision of values returned as money],\n" \
-               " p_precision=%s [decimal precision of values returned as percentages]" %   \
-              (self.par, self.coup_rate, self.req_rate, self.n, self.m, self.m_precision, self.p_precision)
+        return "\n par=%s [par value], coup_rate=%s [coupon rate],\n " \
+               "req_rate=%s [required return], n=%s [years], m=%s [compounds],\n " \
+               "m_precision=%s [decimal precision of values returned as money],\n " \
+               "p_precision=%s [decimal precision of values returned as percentages]\n" \
+               "---------------------------------------------------------------------\n" % \
+               (self.par, self.coup_rate, self.req_rate, self.n, self.m, self.m_precision, self.p_precision)
 
     def calc_coupon(self):
         """ coupon per period """
@@ -233,17 +248,32 @@ class Bond:
         mac = ((((1 + self.r_m) / self.r_m) * h) + (((self.r_m - self.c_m) / self.r_m) * self.n_m * (1 - h))) / self.m
         return round(mac, 2)
 
-    def calc_estimated_ytm(self, rate, bps_chg=50, accuracy=50):
-        """ finds YTM by trial and error, within the bounds of price plus/minus an accuracy factor """
-        """ bps_chg = default value in basis points to increase or decrease 'rate' during search """
-        """ accuracy = $ value accuracy; accuracy=50 stops search within +/- $50 of actual price """
-        bp_est = self.calc_price_modified(rate, self.n)
-        if self.price - accuracy <= bp_est <= self.price + accuracy:
-            return round(rate, self.p_precision)
-        elif bp_est < self.price - accuracy:
-            return self.calc_estimated_ytm(rate - (bps_chg / 10000), accuracy)
-        else:
-            return self.calc_estimated_ytm(rate + (bps_chg / 10000), accuracy)
+    def calc_convexity(self):
+        """ Convexity, expressed in years """
+        pv_par = TVM(self.par, self.req_rate, self.n, self.m, m_precision=5).pv / (self.par / 100)
+        temp_pvcf, temp_t_t = 0, 0
+        for i in range(1, self.n_m + 1):
+            new_pvcf = (self.coupon / (self.par / 100)) * TVM(1, self.req_rate, i / self.m, self.m, m_precision=5).pv
+            new_t_t = new_pvcf * (i * (i + 1))
+            temp_pvcf += new_pvcf
+            temp_t_t += new_t_t
+        max_t = self.n_m * (self.n_m + 1)
+        total_pvcf = round(temp_pvcf + pv_par, 5)
+        total_t_t = round(temp_t_t + (pv_par * max_t), 5)
+        cvx_years = (total_t_t / (((1 + self.r_m) ** self.m) * total_pvcf)) / (self.m ** 2)
+        return round(cvx_years, 2)
+
+    def calc_chg_p_dur(self, chg_bps=1):
+        return -self.duration_mod * ((self.req_rate + (chg_bps / 10000)) - self.req_rate)
+
+    def calc_chg_p_cvx(self, chg_bps=1):
+        return self.convexity * (((self.req_rate + (chg_bps / 10000)) - self.req_rate) ** 2) / 2
+
+    def calc_ytm(self, x=0.05):
+        den = [(1 + i) / self.m for i in range(self.n_m)]
+        value = lambda y: sum([self.coupon / (1 + y / self.m) ** (self.m * i) for i in den]) + \
+                          self.par / ((1 + y / self.m) ** self.n_m) - self.price
+        return round(opt.newton(value, x), self.p_precision)
 
 
 class Portfolio:
@@ -273,3 +303,12 @@ class Portfolio:
             temp_pywa += bond.portfolio_pct_yield
             temp_pdur += bond.portfolio_dur_yield
         return round(temp_pywa, self.p_precision), round(temp_pdur, self.p_precision)
+
+
+def generate_test_bonds():
+    bond_a = Bond(1000, .09, .07, 5)
+    bond_b = Bond(1000, .14, .1, 15)
+    bond_c = Bond(1000, .1, .1, 30)
+    return [bond_a, bond_b, bond_c]
+
+test_port = Portfolio(generate_test_bonds())
