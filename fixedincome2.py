@@ -409,32 +409,40 @@ class Mortgage:
         self.pay_end = pay_end
         self.m_prec = m_p
         self.p_prec = p_p
-        self.rmn = (1 + (self.rate / self.freq)) ** self.term
+        self.rmn = (1 + (self.rate / self.freq)) ** self.amort
         self.r_m = self.rate / self.freq
-        self.a_m = self.amort / self.freq
-        self.t_m = self.term / self.freq
         self.pmt_total = round(self.calc_pmt(), self.m_prec)
         self._m_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        self._y_list = self.year_list()
-        self._time_list = self.make_list()
+        self._m_list_stub_1 = self._m_list[self.date_month - 1:]
+        self._m_list_stub_2 = self._m_list[:self.date_month - 1]
+        self._y_list = [(int(self.date_year) + i) for i in range(int(self.term / self.freq))]
+        self._y_list_stub_1 = self._y_list[1:]
+        self._amort_table = self.make_table()
 
-    def year_list(self):
-        return [(int(self.date_year) + i) for i in range(int(self.t_m))]
-
-    def make_list(self):
+    def make_table(self):
+        prin_agg, year_last = 0, 0
         temp_list = [['DATE', 'BEG BALANCE', 'PAYMENT', 'INTEREST ', 'PRINCIPAL', 'END BALANCE']]
-        prin_agg = 0
-        for year in self._y_list:
-            for month in self._m_list:
-                balance = round(self.prin - prin_agg, self.m_prec)
-                col_1 = month + ' ' + str(self.date_day) + ' ' + str(year)
-                bb = round(balance, self.m_prec)
-                col_2 = self.pmt_total if balance >= self.pmt_total else round(balance, self.m_prec)
-                col_3 = round(balance * (self.rate / self.freq), self.m_prec)
-                col_4 = round(col_2 - col_3, self.m_prec)
-                col_5 = round(bb - col_4, self.m_prec) if bb > col_2 else 0
-                temp_list.append([col_1, bb, col_2, col_3, col_4, col_5])
-                prin_agg += col_4
+
+        def am(prin_agg, prin, pmt, rate_freq, m_var, d_var, y_var, m_prec):
+            bal_end = round(prin - prin_agg, m_prec)
+            bal_beg = round(bal_end, m_prec)
+            col_1 = m_var + ' ' + str(d_var) + ' ' + str(y_var)
+            col_3 = round(pmt, m_prec) if bal_end >= pmt else round(bal_end, m_prec)
+            col_4 = round(bal_end * rate_freq, m_prec)
+            col_5 = round(col_3 - col_4, m_prec)
+            col_6 = round(bal_beg - col_5, m_prec) if bal_beg > col_3 else 0
+            temp_list.append([col_1, bal_beg, col_3, col_4, col_5, col_6])
+            prin_agg += col_5
+            return prin_agg
+
+        for m1 in self._m_list_stub_1:
+            prin_agg = am(prin_agg, self.prin, self.pmt_total, self.r_m, m1, self.date_day, self.date_year, self.m_prec)
+        for year in self._y_list_stub_1:
+            for m2 in self._m_list:
+                prin_agg = am(prin_agg, self.prin, self.pmt_total, self.r_m, m2, self.date_day, year, self.m_prec)
+                year_last = year + 1
+        for m3 in self._m_list_stub_2:
+            prin_agg = am(prin_agg, self.prin, self.pmt_total, self.r_m, m3, self.date_day, year_last, self.m_prec)
         return temp_list
 
     def calc_pmt(self):
@@ -442,4 +450,7 @@ class Mortgage:
 
 
 # make test mortgage
-mtest = Mortgage(200000, .065, 360, 360, 2015, 3, 15)
+mtest1 = Mortgage(200000, .065, 360, 360, 2015, 1, 15)
+mtest2 = Mortgage(200000, .065, 360, 360, 2015, 12, 15)
+mtest3 = Mortgage(200000, .065, 360, 360, 2015, 7, 15)
+
