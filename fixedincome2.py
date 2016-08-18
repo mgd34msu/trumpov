@@ -317,3 +317,128 @@ def generate_test_bonds():
     return [bond_a, bond_b, bond_c]
 
 test_port = Portfolio(generate_test_bonds())
+
+
+class DayCount:
+    def __init__(self, start_month, start_day, start_year, end_month, end_day, end_year, basis):
+        self.start_month = start_month
+        self.start_day = start_day
+        self.start_year = start_year
+        self.end_month = end_month
+        self.end_day = end_day
+        self.end_year = end_year
+        self.basis = basis
+        self.leap = [self.is_leap(self.start_year), self.is_leap(self.end_year)]
+        self.actual_days = self.find_days()[2]
+        self.actual_list = self.find_days()[3]
+        self.days = self.chg_basis()
+        self.list_years = [(self.start_year + i) for i in range(self.end_year - self.start_year + 1)]
+        self.list_days = self.populate_day_list()
+
+    @staticmethod
+    def is_leap(year):
+        leap = 0.
+        if year % 4 == 0:
+            if year % 100 == 0 & year % 400 != 0:
+                leap = 0
+            else:
+                leap += 1
+        return int(leap)
+
+    def find_days(self):
+        day_list = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        if self.leap[0] == 1:
+            if self.start_month <= 2:
+                day_list[2] = 29
+        if self.leap[1] == 1:
+            if self.end_month >= 3:
+                day_list[2] = 29
+            elif self.end_month == 2 & self.end_day == 29:
+                day_list[2] = 29
+        partial_1 = (sum(day_list[self.start_month:]) - self.start_day + 1)
+        partial_2 = (sum(day_list[:self.end_month]) + self.end_day)
+        return partial_1, partial_2, partial_1 + partial_2, day_list
+
+    def populate_day_list(self):
+        d_list = [365 + self.is_leap(self.start_year + i) for i in range(self.end_year - self.start_year + 1)]
+        d_list[0], d_list[-1] = self.find_days()[0], self.find_days()[1]
+        return d_list
+
+    def chg_basis(self):
+        start = self.start_day
+        end = self.end_day
+        if self.basis == 1:
+            return [self.actual_days, sum(self.actual_list)]
+        if self.basis == 2:
+            return [self.actual_days, 365]
+        if self.basis == 3:
+            return [self.actual_days, sum(self.actual_list)]
+        if self.basis == 4:
+            return [self.actual_days, 360]
+        if self.basis == 5:
+            if self.start_day == 31:
+                start = 30
+                if self.end_day == 31:
+                    end = 30
+            if self.end_day == 31 & self.start_day == 30:
+                    end = 30
+            chg_year = (self.end_year - self.start_year)
+            chg_month = (self.end_month - self.start_month)
+            return [(chg_year * 360) + (chg_month * 30) + (end - start), 360]
+        if self.basis == 6:
+            if self.start_day == 31:
+                start = 30
+            if self.end_day == 31:
+                end = 30
+            chg_year = (self.end_year - self.start_year)
+            chg_month = (self.end_month - self.start_month)
+            return [(chg_year * 360) + (chg_month * 30) + (end - start), 360]
+
+
+class Mortgage:
+    def __init__(self, prin, rate, term, amort, date_y, date_m, date_d, x_pmt=0, freq=12, pay_end=0, m_p=2, p_p=4):
+        self.prin = prin
+        self.rate = rate
+        self.term = term
+        self.amort = amort
+        self.date_year = date_y
+        self.date_month = date_m
+        self.date_day = date_d
+        self.x_pmt = x_pmt
+        self.freq = freq
+        self.pay_end = pay_end
+        self.m_prec = m_p
+        self.p_prec = p_p
+        self.rmn = (1 + (self.rate / self.freq)) ** self.term
+        self.r_m = self.rate / self.freq
+        self.a_m = self.amort / self.freq
+        self.t_m = self.term / self.freq
+        self.pmt_total = round(self.calc_pmt(), self.m_prec)
+        self._m_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        self._y_list = self.year_list()
+        self._time_list = self.make_list()
+
+    def year_list(self):
+        return [(int(self.date_year) + i) for i in range(int(self.t_m))]
+
+    def make_list(self):
+        temp_list = [['DATE', 'BEG BALANCE', 'PAYMENT', 'INTEREST ', 'PRINCIPAL', 'END BALANCE']]
+        prin_agg = 0
+        for year in self._y_list:
+            for month in self._m_list:
+                balance = round(self.prin - prin_agg, self.m_prec)
+                col_1 = month + ' ' + str(self.date_day) + ' ' + str(year)
+                bb = round(balance, self.m_prec)
+                col_2 = self.pmt_total if balance >= self.pmt_total else round(balance, self.m_prec)
+                col_3 = round(balance * (self.rate / self.freq), self.m_prec)
+                col_4 = round(col_2 - col_3, self.m_prec)
+                col_5 = round(bb - col_4, self.m_prec) if bb > col_2 else 0
+                temp_list.append([col_1, bb, col_2, col_3, col_4, col_5])
+                prin_agg += col_4
+        return temp_list
+
+    def calc_pmt(self):
+        return (((self.rate * self.prin) * self.rmn) / (self.rmn - 1)) / self.freq
+
+
+mtest = Mortgage(200000, .065, 360, 360, 2015, 3, 15)
