@@ -441,4 +441,5 @@ class Mortgage:
         return (((self.rate * self.prin) * self.rmn) / (self.rmn - 1)) / self.freq
 
 
+# make test mortgage
 mtest = Mortgage(200000, .065, 360, 360, 2015, 3, 15)
