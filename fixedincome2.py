@@ -1,3 +1,4 @@
+import pandas as pd
 import scipy.optimize as opt
 
 
@@ -396,58 +397,116 @@ class DayCount:
 
 
 class Mortgage:
-    def __init__(self, prin, rate, term, amort, date_y, date_m, date_d, x_pmt=0, freq=12, pay_end=0, m_p=2, p_p=4):
-        self.prin = prin
-        self.rate = rate
-        self.term = term
-        self.amort = amort
-        self.date_year = date_y
-        self.date_month = date_m
-        self.date_day = date_d
-        self.x_pmt = x_pmt
-        self.freq = freq
-        self.pay_end = pay_end
+    def __init__(self, amount, rate, term, amort, d_year, d_month, d_day, x_pmt=0, freq=12, io_pds=0, m_p=2, p_p=4):
+        self.l_amt = amount
+        self.l_rate = rate
+        self.l_term = term
+        self.l_amort = amort
+        self.d_year = d_year
+        self.d_month = d_month
+        self.d_day = d_day
+        self.l_x_pmt = x_pmt
+        self.l_freq = freq
+        self.l_io_pds = io_pds
         self.m_prec = m_p
         self.p_prec = p_p
-        self.rmn = (1 + (self.rate / self.freq)) ** self.amort
-        self.r_m = self.rate / self.freq
-        self.pmt_total = round(self.calc_pmt(), self.m_prec)
-        self._m_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-        self._m_list_stub_1 = self._m_list[self.date_month - 1:]
-        self._m_list_stub_2 = self._m_list[:self.date_month - 1]
-        self._y_list = [(int(self.date_year) + i) for i in range(int(self.term / self.freq))]
-        self._y_list_stub_1 = self._y_list[1:]
-        self._amort_table = self.make_table()
+        self.f_rate = (1 + (self.l_rate / self.l_freq)) ** self.l_amort
+        self.r = self.l_rate / self.l_freq
+        self.p_and_i = round(self.calc_pmt(), self.m_prec)
+        self._y_list = [(int(self.d_year) + i) for i in range(int(self.l_term / self.l_freq))]
+        self._table = self.make_table()
+
+    def month_list(self):
+        _m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        skip_dict = {1: 12, 2: 6, 4: 3, 6: 2, 12: 1}
+
+        def generate_list(base_list, skip):
+            return base_list[::skip]
+
+        _m_stub_1 = generate_list(_m[self.d_month - 1:], skip_dict[self.l_freq])
+        _m_stub_2 = generate_list(_m[:self.d_month - 1], skip_dict[self.l_freq])
+        print(_m_stub_1, _m_stub_2)
+        _m_middle = generate_list(_m[:self.d_month - 1] + _m[self.d_month - 1:], skip_dict[self.l_freq])
+        return _m_stub_1, _m_middle, _m_stub_2
 
     def make_table(self):
-        prin_agg, year_last = 0, 0
-        temp_list = [['DATE', 'BEG BALANCE', 'PAYMENT', 'INTEREST ', 'PRINCIPAL', 'END BALANCE']]
+        """ generates amortization table """
+        paid = 0
+        am_table = [['DATE', 'BEG BALANCE', 'PAYMENT', 'INTEREST ', 'PRINCIPAL', 'END BALANCE']]
 
-        def am(prin_agg, prin, pmt, rate_freq, m_var, d_var, y_var, m_prec):
-            bal_end = round(prin - prin_agg, m_prec)
+        def am(tot_paid, prin, pmt, rate_freq, m_var, d_var, y_var, m_prec):
+            """ calculates all values and appends them to the amortization table """
+            bal_end = round(prin - tot_paid, m_prec)
             bal_beg = round(bal_end, m_prec)
-            col_1 = m_var + ' ' + str(d_var) + ' ' + str(y_var)
-            col_3 = round(pmt, m_prec) if bal_end >= pmt else round(bal_end, m_prec)
-            col_4 = round(bal_end * rate_freq, m_prec)
-            col_5 = round(col_3 - col_4, m_prec)
-            col_6 = round(bal_beg - col_5, m_prec) if bal_beg > col_3 else 0
-            temp_list.append([col_1, bal_beg, col_3, col_4, col_5, col_6])
-            prin_agg += col_5
-            return prin_agg
+            col_1 = m_var + ' ' + str(d_var) + ' ' + str(y_var)                         # Date of payment
+            # col_2 is not used -- bal_beg used instead                                 # Beginning principal balance
+            col_3 = round(pmt, m_prec) if bal_end >= pmt else round(bal_end, m_prec)    # Total payment due
+            col_4 = round(bal_end * rate_freq, m_prec)                                  # Interest due
+            col_5 = round(col_3 - col_4, m_prec)                                        # Principal due
+            col_6 = round(bal_beg - col_5, m_prec) if bal_beg > col_3 else 0            # Ending principal balance
+            am_table.append([col_1, bal_beg, col_3, col_4, col_5, col_6])
+            tot_paid += col_5
+            return tot_paid
 
-        for m1 in self._m_list_stub_1:
-            prin_agg = am(prin_agg, self.prin, self.pmt_total, self.r_m, m1, self.date_day, self.date_year, self.m_prec)
-        for year in self._y_list_stub_1:
-            for m2 in self._m_list:
-                prin_agg = am(prin_agg, self.prin, self.pmt_total, self.r_m, m2, self.date_day, year, self.m_prec)
-                year_last = year + 1
-        for m3 in self._m_list_stub_2:
-            prin_agg = am(prin_agg, self.prin, self.pmt_total, self.r_m, m3, self.date_day, year_last, self.m_prec)
-        return temp_list
+        for m1 in self.month_list()[0]:
+            paid = am(paid, self.l_amt, self.p_and_i, self.r, m1, self.d_day, self.d_year, self.m_prec)
+        for year in self._y_list[1:]:
+            for m2 in self.month_list()[1]:
+                paid = am(paid, self.l_amt, self.p_and_i, self.r, m2, self.d_day, year, self.m_prec)
+        for m3 in self.month_list()[2]:
+            paid = am(paid, self.l_amt, self.p_and_i, self.r, m3, self.d_day, self._y_list[-1] + 1, self.m_prec)
+        return am_table
 
     def calc_pmt(self):
-        return (((self.rate * self.prin) * self.rmn) / (self.rmn - 1)) / self.freq
+        return ((((self.l_rate * self.l_amt) * self.f_rate) / (self.f_rate - 1)) / self.l_freq) + self.l_x_pmt
 
+
+def loan():
+    """ creates a new loan -- asks for user input to fill the args in the Mortgage class """
+    freq_dict = {'annually': 1,
+                 'annual': 1,
+                 'years': 1,
+                 'year': 1,
+                 'semi-annually': 2,
+                 'semi-annual': 2,
+                 'semiannually': 2,
+                 'semiannual': 2,
+                 'quarterly': 4,
+                 'quarters': 4,
+                 'quarter': 4,
+                 'monthly': 12,
+                 'months': 12,
+                 'month': 12}
+
+    translate = {'annually': 'years',
+                 'annual': 'years',
+                 'years': 'years',
+                 'year': 'years',
+                 'semi-annually': 'half-years',
+                 'semi-annual': 'half-years',
+                 'semiannually': 'half-years',
+                 'semiannual': 'half-years',
+                 'quarterly': 'quarters',
+                 'quarters': 'quarters',
+                 'quarter': 'quarters',
+                 'monthly': 'months',
+                 'months': 'months',
+                 'month': 'months'}
+
+    _p = float(str(input('Loan Amount: ')).strip('$').replace(',', ''))
+    _r = float(str(input('Interest Rate: ')).strip('%')) / 100
+    _f = str(input('Payment Frequency [annual/semi-annual/quarterly/monthly]: ')).lower()
+    _t = str(input('Loan Maturity [### years or ### months]: ')).lower().split()
+    _t[0], _t[1] = float(_t[0]), freq_dict[_t[1]]
+    _a_f = str(input('Fully Amortizing [y/n]: ')).lower()
+    _a_f = 'y' if _a_f == 'yes' else 'n' if _a_f == 'no' else _a_f
+    _n = _t[0] / _t[1] * freq_dict[_f]
+    _a = float(input('Amortization [### ' + translate[_f] + ']: ')) if _a_f == 'n' else _n
+    _d = str(input('Date of First Payment [mm/dd/yyyy]: ')).split('/')
+
+    return Mortgage(_p, _r, _n, _a, int(_d[2]), int(_d[0]), int(_d[1]), freq=freq_dict[_f])
+
+testloan = loan()
 
 # make test mortgage
 mtest1 = Mortgage(200000, .065, 360, 360, 2015, 1, 15)
