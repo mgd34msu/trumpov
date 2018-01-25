@@ -1,0 +1,2 @@
+trumpov.py
+condensed.json
