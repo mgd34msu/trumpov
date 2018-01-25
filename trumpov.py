@@ -32,3 +32,6 @@ def trumpov(_chain=chain, _corpus=corpus, _msglen=140):
         _key = (_key[1], _choice)
 
     print(_msg)
+
+if __name__ == '__main__':
+    trumpov()
